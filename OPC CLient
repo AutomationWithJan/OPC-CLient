@@ -1,0 +1,75 @@
+using NationalInstruments;
+using NationalInstruments.NetworkVariable;
+using NationalInstruments.NetworkVariable.WindowsForms;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace OPCClientApp1
+{
+    public partial class Form1 : Form
+    {
+        private NetworkVariableReader<double> _reader;
+        private const string NetworkVariableLocation = @"\\localhost\OPCProcess\Temperature";
+        private NetworkVariableWriter<double> _writer;
+        public Form1()
+        {
+            InitializeComponent();
+            ConnectOPCServer();
+        }
+        private void ConnectOPCServer()
+        {
+            _reader = new NetworkVariableReader<double>(NetworkVariableLocation);
+            _reader.Connect();
+            txtStatus.Text = _reader.ConnectionStatus.ToString();
+            _writer = new NetworkVariableWriter<Double> (NetworkVariableLocation);
+                _writer.Connect();
+        }
+
+        private void btnGetData_Click(object sender, EventArgs e)
+        {
+            NetworkVariableData<double> opcdata = null;
+            try
+            {
+                opcdata = _reader.ReadData();
+                txtTemperature.Text = opcdata.GetValue().ToString();
+                
+
+            }
+            catch (TimeoutException)
+            {
+                MessageBox.Show("The read has timed out.", "Timeout");
+                return; 
+            }
+
+            
+        }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            _reader.Disconnect();
+            _writer.Disconnect();
+        }
+
+        private void btnWriteData_Click(object sender, EventArgs e)
+        {
+            double temperature;
+            try
+            {
+                temperature = Convert.ToDouble(txtWriteData.Text);
+                _writer.WriteValue(temperature);
+
+            }
+            catch (TimeoutException)
+            {
+                MessageBox.Show("The read has timed out.", "Timeout");
+                return;
+            }
+        }
+    }
+}
